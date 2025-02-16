@@ -1,0 +1,98 @@
+/* Container for all filters */
+.filters {
+    display: flex;
+    flex-direction: column;
+    gap: 16px; /* Space between each filter */
+    max-width: 100%; /* Allow the container to scale */
+    width: 100%; /* Take full width of the parent */
+    padding: 0 16px; /* Add some padding */
+    box-sizing: border-box; /* Include padding in width calculation */
+  }
+  
+  /* Dropdown container */
+  .dropdown {
+    position: relative;
+    display: inline-block;
+    width: 100%; /* Ensure dropdown takes full width */
+  }
+  
+  /* Dropdown button */
+  .dropdownButton {
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    padding: 8px 32px 8px 16px; /* Add extra padding on the right for the arrow */
+    cursor: pointer;
+    border-radius: 4px;
+    position: relative; /* Required for positioning the arrow */
+    width: 100%; /* Ensure button takes full width */
+    text-align: left; /* Align text to the left */
+    appearance: none; /* Remove default arrow */
+    -webkit-appearance: none; /* Remove default arrow for Safari */
+    -moz-appearance: none; /* Remove default arrow for Firefox */
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 12px;
+  }
+  
+  /* Dropdown menu */
+  .dropdownMenu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    width: 100%; /* Ensure dropdown menu matches button width */
+    margin-top: 4px; /* Add space between button and menu */
+  }
+  
+  /* Dropdown items */
+  .dropdownItem {
+    display: block;
+    padding: 8px 16px;
+    cursor: pointer;
+  }
+  
+  /* Hover effect for dropdown items */
+  .dropdownItem:hover {
+    background-color: #f1f1f1;
+  }
+  
+  /* Style for all select elements */
+  .filters select {
+    width: 100%;
+    padding: 8px 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    cursor: pointer;
+    appearance: none; /* Remove default arrow */
+    -webkit-appearance: none; /* Remove default arrow for Safari */
+    -moz-appearance: none; /* Remove default arrow for Firefox */
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 12px;
+  }
+  
+  /* Style for date input */
+  .filters input[type="date"] {
+    width: 100%;
+    padding: 8px 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    cursor: pointer;
+  }
+  
+  /* Media query for smaller screens */
+  @media (max-width: 600px) {
+    .filters {
+      padding: 0 8px; /* Reduce padding on smaller screens */
+    }
+  }

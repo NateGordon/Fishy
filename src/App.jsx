@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Filters from "./components/filters";
 import Map from "./components/map";
 import "./styles.css";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 function App() {
   const [filters, setFilters] = useState({
