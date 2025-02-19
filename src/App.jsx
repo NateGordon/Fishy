@@ -16,12 +16,15 @@ function App() {
   return (
     <div>
       <header>
-        <h2>Fishy</h2>
+        <h1>Fishy</h1>
         <h3>Find Your Next Fishing Spot</h3>
       </header>
 
-      <Filters filters={filters} setFilters={setFilters} />
-      <Map filters={filters} />
+      {/* Wrap filters and map inside a container */}
+      <div className="layout-container">
+        <Filters filters={filters} setFilters={setFilters} />
+        <Map filters={filters} />
+      </div>
     </div>
   );
 }

@@ -1,13 +1,18 @@
 /* Container for all filters */
 .filters {
-    display: flex;
-    flex-direction: column;
-    gap: 16px; /* Space between each filter */
-    max-width: 100%; /* Allow the container to scale */
-    width: 100%; /* Take full width of the parent */
-    padding: 0 16px; /* Add some padding */
-    box-sizing: border-box; /* Include padding in width calculation */
-  }
+  display: flex;
+  flex-direction: column; /* Stack filters vertically */
+  gap: 16px; /* Keeps even spacing */
+  justify-content: flex-start; /* Align filters to the left */
+  align-items: stretch; /* Allow items to stretch to full width */
+}
+
+.filters > * {
+  min-width: 200px; /* Prevents shrinking too much */
+  max-width: 300px; /* Ensures they don’t stretch too wide */
+  width: 100%; /* Make sure each filter takes full width */
+}
+
   
   /* Dropdown container */
   .dropdown {
