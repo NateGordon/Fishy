@@ -6,13 +6,61 @@ General Reset
     font-family: Arial, sans-serif;
   }
 
+  @import url('https://fonts.googleapis.com/css2?family=Lobster&display=swap');
+
+header {
+  font-family: 'Lobster', cursive;
+  text-align: center;
+  padding: 20px;
+  background: linear-gradient(90deg, #007bff, #00c6ff);
+  color: white;
+  border-bottom: 4px solid #0056b3;
+  box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.3);
+}
+
+h1 {
+  font-size: 50px;
+  text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.4);
+  transition: transform 0.3s ease-in-out;
+}
+
+h1:hover {
+  transform: scale(1.05);
+}
+
+
+  /* General Filter Styles */
+.form-select, .form-control {
+  border: 2px solid #707377; /* Blue border */
+  border-radius: 8px; /* Rounded corners */
+  padding: 10px;
+  font-size: 16px;
+  transition: all 0.3s ease-in-out;
+}
+
+/* Hover Effect */
+.form-select:hover, .form-control:hover {
+  border-color: #0056b3; /* Darker blue on hover */
+  background-color: #f8f9fa; /* Light gray background */
+  transform: scale(1.02); /* Slight scaling effect */
+}
+
+/* Focus (when clicking inside the input) */
+.form-select:focus, .form-control:focus {
+  border-color: #003d80; /* Even darker blue */
+  background-color: white;
+  box-shadow: 0px 0px 5px rgba(0, 91, 187, 0.5); /* Subtle glow */
+  outline: none;
+}
+
+
   /* Ensure the root container takes up the full screen */
   html, body, #root {
     width: 100vw;
     height: 100vh;
     margin: 0;
     padding: 0;
-    overflow: hidden; /* Prevent unwanted scrollbars */
+    overflow-y: auto;
   }
 
   /* Ensure the main container inside expands */
@@ -21,16 +69,6 @@ General Reset
     flex-direction: column;
     width: 100%;
     height: 100%;
-  }
-
-  
-  /* Header */
-  header {
-    background: #008CBA;
-    color: white;
-    text-align: center;
-    padding: 15px;
-    font-size: 1.5rem;
   }
   
   /* Filters */
@@ -41,21 +79,22 @@ General Reset
     padding: 15px;
     background: #f4f4f4;
     width: 100%; /* Ensure it spans full width */
-    max-width: 300px; /* Keeps filters a reasonable width */
-}
+    max-width: 200px; /* Keeps filters a reasonable width */
+  }
   
-  .filters select,
-  .filters input {
+  .filters select, .filters input {
     padding: 8px;
     font-size: 1rem;
     border: 1px solid #ccc;
     border-radius: 5px;
   }
   
-  /* Map */
   .map-container {
     display: flex;
     justify-content: center;
+    flex: 1; /* Allow the map to grow */
+    min-width: 600px;
+    width: 100%;
     padding: 20px;
   }
   
@@ -66,62 +105,59 @@ General Reset
     border-radius: 10px;
   }
   
-  /* Responsive */
-  @media (max-width: 768px) {
+  /* Main layout container */
+  .layout-container {
+    display: flex;
+    flex-direction: column; /* Default: stacked on small screens */
+    align-items: center;
+    width: 100%;
+    padding: 15px;
+    gap: 20px;
+    min-height: 100vh; /* Ensures enough height */
+    padding-bottom: 50px; /* Prevents cutting off content */
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 100px) {
     .filters {
       flex-direction: column;
       align-items: center;
     }
   }
+  
+  @media (min-width: 768px) {
+    .layout-container {
+      flex-direction: row;
+      align-items: flex-start;
+    }
+  }
+  
 
-  /* Main layout container */
-.layout-container {
-  display: flex;
-  flex-direction: column; /* Default: stacked on small screens */
-  align-items: center; /* Center everything */
-  width: 100%;
-  padding: 15px;
-  gap: 20px;
-}
-
-/* Filters */
-.filters {
-  display: flex;
-  flex-direction: column; /* Ensure filters stay stacked */
-  gap: 10px;
-  max-width: 300px; /* Keep filters at a reasonable width */
-  width: 100%;
-}
-
-/* Map */
-.map-container {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  padding: 20px;
-}
-
-/* Ensure proper layout on large screens */
-@media (min-width: 1024px) {
-  .layout-container {
+  .submit-container {
     display: flex;
-    flex-direction: row; /* Side by side layout */
-    align-items: flex-start;
+    justify-content: center;  /* Centers it */
+    align-items: center;
+    width: 100%;  /* Ensures it takes full width on smaller screens */
+    margin-top: 15px;
   }
-
-  .filters {
-    display: flex;
-    flex-direction: column; /* ✅ Force stacking */
-    align-items: flex-start; /* ✅ Align to the left */
-    width: 300px;
-    flex: none;
+  
+  .submit-button {
+    background-color: #007bff;  /* Blue background */
+    border: 2px solid #0056b3;  /* Adds a border with a darker blue */
+    padding: 12px 20px;
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+    border-radius: 8px;
+    transition: all 0.3s ease-in-out;
   }
-
-  .map-container {
-    flex: 1; /* Allow the map to grow */
-    min-width: 600px;
+  
+  .submit-button:hover {
+    background-color: #0056b3;
+    border-color: #003d80;  /* Darker blue border on hover */
+    transform: scale(1.05);
   }
-}
+  
 
 
   
