@@ -1,35 +1,19 @@
-import React, { useState } from "react";
-import Filters from "./components/Filters";
-import Map from "./components/Map";
+import React from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import FiltersPage from "./pages/FiltersPage";
+import ResultsPage from "./pages/ResultsPage";
 import "./styles.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function App() {
-  const [filters, setFilters] = useState({
-    species: [],
-    waterType: "",
-    date: "",
-    catchRelease: "",
-    radius: "",
-  });
-
-  const handleSubmit = () => {
-    console.log("Filters submitted:", filters);
-    // Add logic to fetch filtered results here
-  };
-
   return (
-    <div>
-      <header>
-        <h1>FISHY</h1>
-        <h3>Find Your Next Fishing Spot</h3>
-      </header>
-
-      <div className="layout-container">
-        <Filters filters={filters} setFilters={setFilters} onSubmit={handleSubmit} />
-        <Map />
-      </div>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<FiltersPage />} />
+        <Route path="/results" element={<ResultsPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Router>
   );
 }
 

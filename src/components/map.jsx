@@ -1,143 +1,346 @@
-import React, { useState } from "react";
-import { GoogleMap, useLoadScript, Marker } from "@react-google-maps/api";
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import { MapContainer, TileLayer, Marker, Circle, useMapEvents, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
-const mapOptions = {
-  zoom: 7, // Initial zoom level
-  center: { lat: 42.5, lng: -71.5724 }, // Centered on NH
-  disableDefaultUI: true, // Removes UI controls
-  draggable: true, // Allows dragging
-  zoomControl: true, // Allows zoom control
-  scrollwheel: true, // Blocks scroll zoom
-  disableDoubleClickZoom: true, // Prevents zooming by double-click
-  restriction: {
-    latLngBounds: {
-      north: 46.3,  // North boundary of NH
-      south: 41.7,  // South boundary of NH
-      east: -68.9,  // East boundary of NH
-      west: -74.1,  // West boundary of NH
+// Fix for default marker icon in React-Leaflet
+// This is needed because webpack/vite doesn't handle the default icon paths correctly
+const DefaultIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
+
+// New Hampshire bounds
+const nhBounds = [
+  [42.7, -72.55], // Southwest corner [lat, lng]
+  [45.3, -70.7]   // Northeast corner [lat, lng]
+];
+
+// Approximate New Hampshire state boundary coordinates (simplified rectangular boundary)
+// Using a more accurate rectangular approximation of NH
+const nhBoundary = [
+  [45.305, -72.557], // Northwest
+  [45.305, -70.694], // Northeast  
+  [42.697, -70.694], // Southeast
+  [42.697, -72.557], // Southwest
+  [45.305, -72.557]  // Back to start
+];
+
+// Large bounding box covering surrounding area (for gray overlay)
+const overlayBounds = [
+  [30, -80],  // Southwest corner (covers large area)
+  [50, -65]   // Northeast corner
+];
+
+// Convert radius string to meters
+const radiusToMeters = (radiusStr) => {
+  if (!radiusStr || radiusStr === "All of NH") return null;
+  const miles = parseInt(radiusStr);
+  if (isNaN(miles)) return null;
+  // Convert miles to meters (1 mile ≈ 1609.34 meters)
+  return miles * 1609.34;
+};
+
+// Component to handle map clicks
+function MapClickHandler({ onMapClick, isWithinBounds }) {
+  useMapEvents({
+    click: (e) => {
+      const { lat, lng } = e.latlng;
+      if (isWithinBounds(lat, lng)) {
+        onMapClick({ lat, lng });
+      }
     },
-    strictBounds: true, // Restricts movement within bounds
-  },
-  minZoom: 5, // Minimum zoom level (prevents zooming out too far)
-  maxZoom: 10, // Maximum zoom level (prevents zooming in too much)
-};
-
-const containerStyle = {
-  width: "100%",
-  height: "100vh", // Ensure it takes full viewport height
-};
-
-export default function Map() {
-  const { isLoaded } = useLoadScript({
-    googleMapsApiKey: "REDACTED-GOOGLE-API-KEY", // Replace with your API key
   });
-
-  const [markers, setMarkers] = useState([]);
-
-  // New Hampshire bounds for restriction
-  const nhBounds = {
-    north: 45.3,  // North boundary of NH
-    south: 42.7,  // South boundary of NH
-    east: -70.7,  // East boundary of NH
-    west: -72.55,  // West boundary of NH
-  };
-
-  // Check if clicked position is within NH bounds
-  const isWithinBounds = (lat, lng) => {
-    return (
-      lat >= nhBounds.south &&
-      lat <= nhBounds.north &&
-      lng >= nhBounds.west &&
-      lng <= nhBounds.east
-    );
-  };
-
-  // Handle click event to drop pin
-  const handleMapClick = (event) => {
-    const lat = event.latLng.lat();
-    const lng = event.latLng.lng();
-
-    // Only place marker if it's within NH bounds
-    if (isWithinBounds(lat, lng)) {
-      const newMarker = {
-        lat,
-        lng,
-      };
-      setMarkers([newMarker]); // Set only one marker at a time
-    }
-  };
-
-  if (!isLoaded) return <div>Loading...</div>;
-
-  return (
-    <GoogleMap
-      mapContainerStyle={containerStyle}
-      center={mapOptions.center}
-      zoom={mapOptions.zoom}
-      options={mapOptions}
-      onClick={handleMapClick} // Set up the click event
-    >
-      {markers.map((marker, index) => (
-        <Marker key={index} position={marker} />
-      ))}
-    </GoogleMap>
-  );
+  return null;
 }
 
+// Component to create gray overlay mask (everything except NH)
+// Creates polygons around NH to gray out surrounding states
+function GrayOverlay() {
+  const map = useMap();
+  const overlayRef = useRef(null);
 
-// import React, { useState } from "react";
-// import { GoogleMap, useLoadScript, Marker } from "@react-google-maps/api";
+  useEffect(() => {
+    if (!overlayRef.current && map) {
+      try {
+        const layers = [];
+        const grayStyle = {
+          fillColor: '#808080',
+          fillOpacity: 0.6,
+          color: 'transparent',
+          weight: 0,
+          interactive: false
+        };
 
-// const mapOptions = {
-//   zoom: 7, // Fixed zoom level
-//   center: { lat: 42.5, lng: -71.5724 }, // Centered on NH
-//   disableDefaultUI: true, // Removes UI controls
-//   draggable: true, // Prevents dragging
-//   zoomControl: true, // Disables zoom buttons
-//   scrollwheel: true, // Blocks scroll zoom
-//   disableDoubleClickZoom: true, // Prevents zooming by double-click
-// };
+        // Create 4 rectangles around NH to gray out surrounding areas
+        // Rectangle format: [[south, west], [north, east]]
+        
+        // Top rectangle (above NH)
+        const topRect = L.rectangle([
+          [nhBoundary[0][0], overlayBounds[0][1]], // SW: top of NH, west edge
+          [overlayBounds[1][0], overlayBounds[1][1]] // NE: far north, far east
+        ], grayStyle).addTo(map);
+        layers.push(topRect);
 
-// const containerStyle = {
-//   width: "50vw",
-//   height: "100vh", // Adjust height as needed
-// };
+        // Bottom rectangle (below NH)
+        const bottomRect = L.rectangle([
+          [overlayBounds[0][0], overlayBounds[0][1]], // SW: far south, far west
+          [nhBoundary[2][0], overlayBounds[1][1]] // NE: bottom of NH, far east
+        ], grayStyle).addTo(map);
+        layers.push(bottomRect);
 
-// const mapWrapperStyle = {
-//   display: "flex",
-//   justifyContent: "center", // Horizontally centers the map
-//   alignItems: "center", // Vertically centers the map
-//   height: "100vh", // Ensures the wrapper takes full viewport height
-// };
+        // Left rectangle (west of NH)
+        const leftRect = L.rectangle([
+          [nhBoundary[3][0], overlayBounds[0][1]], // SW: bottom of NH, far west
+          [nhBoundary[0][0], nhBoundary[3][1]] // NE: top of NH, west edge of NH
+        ], grayStyle).addTo(map);
+        layers.push(leftRect);
 
-// export default function Map() {
-//   const { isLoaded } = useLoadScript({
-//     googleMapsApiKey: "REDACTED-GOOGLE-API-KEY", // Replace with your API key
-//   });
+        // Right rectangle (east of NH)
+        const rightRect = L.rectangle([
+          [nhBoundary[2][0], nhBoundary[1][1]], // SW: bottom of NH, east edge of NH
+          [nhBoundary[1][0], overlayBounds[1][1]] // NE: top of NH, far east
+        ], grayStyle).addTo(map);
+        layers.push(rightRect);
 
-//   const [marker, setMarker] = useState(null); // Store a single marker's position
+        // Add NH state boundary outline for visual clarity
+        const nhOutline = L.polygon(nhBoundary, {
+          fillColor: 'transparent',
+          fillOpacity: 0,
+          color: '#333333',
+          weight: 2,
+          opacity: 0.8,
+          dashArray: '5, 5',
+          interactive: false
+        }).addTo(map);
+        layers.push(nhOutline);
 
-//   const handleMapClick = (event) => {
-//     const newMarker = {
-//       lat: event.latLng.lat(),
-//       lng: event.latLng.lng(),
-//     };
-//     setMarker(newMarker); // Update the position of the single marker
-//   };
+        overlayRef.current = { layers };
+      } catch (error) {
+        console.error('Error creating gray overlay:', error);
+      }
+    }
 
-//   if (!isLoaded) return <div>Loading...</div>;
+    return () => {
+      if (overlayRef.current && map) {
+        try {
+          overlayRef.current.layers.forEach(layer => {
+            if (map.hasLayer(layer)) {
+              map.removeLayer(layer);
+            }
+          });
+        } catch (error) {
+          console.error('Error removing gray overlay:', error);
+        }
+      }
+    };
+  }, [map]);
 
-//   return (
-//     <div style={mapWrapperStyle}>
-//       <GoogleMap
-//         mapContainerStyle={containerStyle}
-//         center={mapOptions.center}
-//         zoom={mapOptions.zoom}
-//         options={mapOptions}
-//         onClick={handleMapClick} // Set up the click event
-//       >
-//         {marker && <Marker position={marker} />} {/* Only one marker is displayed */}
-//       </GoogleMap>
-//     </div>
-//   );
-// }
+  return null;
+}
+
+export default function Map({ selectedRadius, onLocationChange, initialMarker }) {
+  const [marker, setMarker] = useState(initialMarker || null);
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationError, setLocationError] = useState(null);
+  const mapInstanceRef = useRef(null);
+
+  // Update marker when initialMarker prop changes
+  useEffect(() => {
+    if (initialMarker) {
+      setMarker(initialMarker);
+    }
+  }, [initialMarker]);
+
+  // Check if position is within NH bounds
+  const isWithinBounds = useCallback((lat, lng) => {
+    return (
+      lat >= nhBounds[0][0] &&
+      lat <= nhBounds[1][0] &&
+      lng >= nhBounds[0][1] &&
+      lng <= nhBounds[1][1]
+    );
+  }, []);
+
+  // Handle map click to place marker
+  const handleMapClick = useCallback((location) => {
+    setMarker(location);
+    if (onLocationChange) {
+      onLocationChange(location);
+    }
+  }, [onLocationChange]);
+
+  // Handle getting user's current location
+  const handleUseMyLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    setIsLocating(true);
+    setLocationError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        
+        if (isWithinBounds(latitude, longitude)) {
+          const location = { lat: latitude, lng: longitude };
+          setMarker(location);
+          if (onLocationChange) {
+            onLocationChange(location);
+          }
+          
+          // Center map on user's location
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.setView([latitude, longitude], 10);
+          }
+          
+          setLocationError(null);
+        } else {
+          setLocationError("Your location is outside of New Hampshire. Please click on the map to select a location within NH.");
+        }
+        setIsLocating(false);
+      },
+      (error) => {
+        setIsLocating(false);
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setLocationError("Location permission denied. Please allow location access or click on the map to select a location.");
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setLocationError("Location information is unavailable. Please click on the map to select a location.");
+            break;
+          case error.TIMEOUT:
+            setLocationError("Location request timed out. Please try again or click on the map to select a location.");
+            break;
+          default:
+            setLocationError("An error occurred while getting your location. Please click on the map to select a location.");
+            break;
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  }, [isWithinBounds, onLocationChange]);
+
+  // Calculate radius in meters
+  const radiusMeters = radiusToMeters(selectedRadius);
+
+  // Handle map creation to prevent double initialization
+  const handleMapCreated = useCallback((map) => {
+    if (!mapInstanceRef.current) {
+      mapInstanceRef.current = map;
+      // Invalidate size to ensure map renders correctly
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 100);
+    }
+  }, []);
+
+  // Determine initial center - use marker location if available, otherwise center on NH
+  const initialCenter = initialMarker ? [initialMarker.lat, initialMarker.lng] : [43.5, -71.5724];
+  const initialZoom = initialMarker ? 10 : 7; // Zoom in more if marker is present
+
+  return (
+    <div style={{ width: '100%', height: '500px', position: 'relative' }}>
+      {/* Use My Location Button */}
+      <button
+        onClick={handleUseMyLocation}
+        disabled={isLocating}
+        className="use-location-button"
+        title="Use your current location"
+      >
+        {isLocating ? '📍 Locating...' : '📍 Use My Location'}
+      </button>
+      
+      {/* Location Error Message */}
+      {locationError && (
+        <div className="location-error-message">
+          {locationError}
+          <button 
+            className="location-error-close"
+            onClick={() => setLocationError(null)}
+            aria-label="Close error message"
+          >
+            ×
+          </button>
+        </div>
+      )}
+      
+      <MapContainer
+        key="nh-fishing-map"
+        center={initialCenter}
+        zoom={initialZoom}
+        style={{ width: '100%', height: '500px' }}
+        minZoom={5}
+        maxZoom={13}
+        maxBounds={[
+          [nhBounds[0][0], nhBounds[0][1]],
+          [nhBounds[1][0], nhBounds[1][1]]
+        ]}
+        scrollWheelZoom={true}
+        doubleClickZoom={true}
+        zoomControl={true}
+        whenCreated={handleMapCreated}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        
+        {/* Gray overlay mask (everything except NH) */}
+        <GrayOverlay />
+        
+        {/* Map click handler */}
+        <MapClickHandler onMapClick={handleMapClick} isWithinBounds={isWithinBounds} />
+        
+        {/* Marker */}
+        {marker && (
+          <Marker
+            position={[marker.lat, marker.lng]}
+            draggable={true}
+            eventHandlers={{
+              dragend: (e) => {
+                const newPosition = e.target.getLatLng();
+                const newLocation = { lat: newPosition.lat, lng: newPosition.lng };
+                if (isWithinBounds(newLocation.lat, newLocation.lng)) {
+                  setMarker(newLocation);
+                  if (onLocationChange) {
+                    onLocationChange(newLocation);
+                  }
+                } else {
+                  // Reset to previous position if dragged outside bounds
+                  e.target.setLatLng([marker.lat, marker.lng]);
+                }
+              },
+            }}
+          />
+        )}
+        
+        {/* Radius circle overlay */}
+        {marker && radiusMeters && (
+          <Circle
+            center={[marker.lat, marker.lng]}
+            radius={radiusMeters}
+            pathOptions={{
+              color: '#3388ff',
+              fillColor: '#3388ff',
+              fillOpacity: 0.2,
+              weight: 2,
+            }}
+          />
+        )}
+      </MapContainer>
+    </div>
+  );
+}

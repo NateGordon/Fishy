@@ -1,17 +1,16 @@
 import React from "react";
 
-const SubmitButton = ({ onClick }) => {
+const SubmitButton = ({ onClick, disabled = false }) => {
   return (
-    <button className="btn submit-button mt-3" onClick={onClick}>
+    <button 
+      className={`btn submit-button mt-3 ${disabled ? 'disabled' : ''}`}
+      onClick={onClick}
+      disabled={disabled}
+    >
       🎣 Find Fishing Spots
     </button>
   );
 };
-
-<div className="submit-container">
-  <button className="submit-button">Find Fishing Spots</button>
-</div>
-
 
 export default SubmitButton;
 
