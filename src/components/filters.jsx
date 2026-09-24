@@ -198,18 +198,15 @@ const Filters = ({ filters, setFilters, onSubmit }) => {
             }
           }}
         >
-          <select 
+          <button
+            type="button"
             className={`form-select ${!canSelectSpecies ? 'disabled' : ''}`}
             onClick={() => canSelectSpecies && setIsDropdownOpen(!isDropdownOpen)}
-            onChange={() => {}} // Prevent warning - this is a display-only select
-            value={getSpeciesDisplayText()}
             disabled={!canSelectSpecies}
-            style={!canSelectSpecies ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+            style={{ textAlign: 'left', ...(!canSelectSpecies ? { opacity: 0.5, cursor: 'not-allowed' } : {}) }}
           >
-            <option>
-              {!canSelectSpecies ? "Select date and catch & release first" : getSpeciesDisplayText()}
-            </option>
-          </select>
+            {!canSelectSpecies ? "Select date and catch & release first" : getSpeciesDisplayText()}
+          </button>
           {showTooltip && filters.species.length > 0 && (
             <div 
               className="species-tooltip"
@@ -279,14 +276,14 @@ const Filters = ({ filters, setFilters, onSubmit }) => {
           onMouseEnter={() => filters.waterType.length > 0 && setShowWaterTypeTooltip(true)}
           onMouseLeave={() => setShowWaterTypeTooltip(false)}
         >
-          <select 
-            className="form-select" 
+          <button
+            type="button"
+            className="form-select"
             onClick={() => setIsWaterTypeDropdownOpen(!isWaterTypeDropdownOpen)}
-            onChange={() => {}} // Prevent warning - this is a display-only select
-            value={getWaterTypeDisplayText()}
+            style={{ textAlign: 'left' }}
           >
-            <option>{getWaterTypeDisplayText()}</option>
-          </select>
+            {getWaterTypeDisplayText()}
+          </button>
           {showWaterTypeTooltip && filters.waterType.length > 0 && (
             <div 
               className="species-tooltip"
