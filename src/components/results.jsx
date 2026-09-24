@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 const Results = ({ locations, filters }) => {
   const [expandedCards, setExpandedCards] = useState(new Set());

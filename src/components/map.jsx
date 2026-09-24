@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Circle, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -237,8 +237,8 @@ export default function Map({ selectedRadius, onLocationChange, initialMarker })
   const radiusMeters = radiusToMeters(selectedRadius);
 
   // Handle map creation to prevent double initialization
-  const handleMapCreated = useCallback((map) => {
-    if (!mapInstanceRef.current) {
+  const handleMapRef = useCallback((map) => {
+    if (map && !mapInstanceRef.current) {
       mapInstanceRef.current = map;
       // Invalidate size to ensure map renders correctly
       setTimeout(() => {
@@ -291,7 +291,7 @@ export default function Map({ selectedRadius, onLocationChange, initialMarker })
         scrollWheelZoom={true}
         doubleClickZoom={true}
         zoomControl={true}
-        whenCreated={handleMapCreated}
+        ref={handleMapRef}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

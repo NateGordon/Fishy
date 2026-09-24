@@ -28,6 +28,13 @@ h1:hover {
   transform: scale(1.05);
 }
 
+.data-loading-message {
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  opacity: 0.85;
+  margin-top: 6px;
+}
+
 
   /* General Filter Styles */
 .form-select, .form-control {

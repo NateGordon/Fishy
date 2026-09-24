@@ -1,4 +1,3 @@
-import React from "react";
 
 const SubmitButton = ({ onClick, disabled = false }) => {
   return (

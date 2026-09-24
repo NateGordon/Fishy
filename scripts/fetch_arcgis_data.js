@@ -8,9 +8,6 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-// ArcGIS Web App URL
-const ARCGIS_WEB_APP_URL = "https://nhfg.maps.arcgis.com/apps/webappviewer/index.html?id=2243091f322449819c244c0c3b2f3f43";
-
 /**
  * Make HTTP/HTTPS request
  */

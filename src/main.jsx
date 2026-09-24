@@ -8,9 +8,3 @@ import "leaflet/dist/leaflet.css";
 createRoot(document.getElementById('root')).render(
   <App />
 )
-
-// REDACTED-GOOGLE-API-KEY
-
-//git add .
-//git commit -m "-message-"
-//git push origin main

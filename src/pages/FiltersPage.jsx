@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Filters from "../components/filters";
 import Map from "../components/map";
@@ -102,11 +102,13 @@ function FiltersPage() {
   }, []);
 
   const handleSubmit = () => {
-    console.log("Filters submitted:", filters);
-    console.log("Selected location:", selectedLocation);
-    
     if (!selectedLocation) {
       alert("Please select a location on the map first!");
+      return;
+    }
+
+    if (isLoading) {
+      alert("Fishing spot data is still loading. Please try again in a moment.");
       return;
     }
 
@@ -115,9 +117,7 @@ function FiltersPage() {
     
     // Sort by quality using rules-based scoring
     const sorted = sortLocations(filtered, filters, selectedLocation);
-    
-    console.log(`Found ${sorted.length} matching fishing spots`);
-    
+
     // Navigate to results page with data in state
     navigate('/results', { 
       state: { 
@@ -137,6 +137,7 @@ function FiltersPage() {
       <header>
         <h1>FISHY</h1>
         <h3>Find Your Next Fishing Spot</h3>
+        {isLoading && <p className="data-loading-message">Loading fishing spot data…</p>}
       </header>
 
       <div className="layout-container">

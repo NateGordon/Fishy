@@ -103,20 +103,22 @@ function getSpeciesSeason(waterbody, species, year) {
           end: getLaborDay(year).toISOString().split('T')[0],
           notes: 'Wild Trout Streams season'
         };
-      case 'trout_pond':
+      case 'trout_pond': {
         const fourthSatApril = getFourthSaturdayApril(year);
         return {
           start: fourthSatApril.toISOString().split('T')[0],
           end: `${yearStr}-10-15`,
           notes: 'Trout Ponds season'
         };
-      case 'wild_trout_pond':
+      }
+      case 'wild_trout_pond': {
         const fourthSatApril2 = getFourthSaturdayApril(year);
         return {
           start: fourthSatApril2.toISOString().split('T')[0],
           end: getLaborDay(year).toISOString().split('T')[0],
           notes: 'Wild Trout Ponds season'
         };
+      }
       case 'lake_trout_salmon_water':
         return {
           start: `${yearStr}-01-01`,
@@ -189,7 +191,7 @@ function getSpeciesSeason(waterbody, species, year) {
           notes: 'Rivers & Streams season',
           catchRelease: catchReleasePeriod
         };
-      case 'trout_pond':
+      case 'trout_pond': {
         const fourthSatApril = getFourthSaturdayApril(year);
         return {
           start: fourthSatApril.toISOString().split('T')[0],
@@ -197,6 +199,7 @@ function getSpeciesSeason(waterbody, species, year) {
           notes: 'Trout Ponds season',
           catchRelease: catchReleasePeriod
         };
+      }
       case 'lake_trout_salmon_water':
         return {
           start: `${yearStr}-01-01`,
@@ -228,13 +231,14 @@ function getSpeciesSeason(waterbody, species, year) {
         end: `${yearStr}-10-15`,
         notes: 'Rivers & Streams season'
       };
-    case 'trout_pond':
+    case 'trout_pond': {
       const fourthSatApril = getFourthSaturdayApril(year);
       return {
         start: fourthSatApril.toISOString().split('T')[0],
         end: `${yearStr}-10-15`,
         notes: 'Trout Ponds season'
       };
+    }
     case 'lake_trout_salmon_water':
       return {
         start: `${yearStr}-01-01`,
