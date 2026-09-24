@@ -67,11 +67,24 @@ export function filterLocations(locations, filters, selectedLocation) {
   // 3. Date/Season Filter
   if (filters.date) {
     filtered = filtered.filter(location => {
-      // Check if all selected species are in season on this date
+      // Check if the selected species that are actually present at this location
+      // are in season on this date (species the user picked but this location
+      // doesn't have shouldn't block the location on season grounds)
       if (filters.species && filters.species.length > 0) {
+        const locationSpecies = location.species || [];
+        const relevantSpecies = filters.species.filter(selectedSpecies =>
+          locationSpecies.some(locSpecies =>
+            locSpecies.toLowerCase() === selectedSpecies.toLowerCase()
+          )
+        );
+        if (relevantSpecies.length === 0) {
+          // No overlap with this location's species; nothing to check here
+          // (the species filter above already would have excluded this location)
+          return true;
+        }
         const seasonCheck = areSpeciesInSeason(
           location,
-          filters.species,
+          relevantSpecies,
           filters.date
         );
         return seasonCheck.allInSeason;
@@ -98,17 +111,26 @@ export function filterLocations(locations, filters, selectedLocation) {
     filtered = filtered.filter(location => {
       // Check if catch & release is required on the selected date (e.g., bass May 15 - June 15)
       if (filters.date && filters.species && filters.species.length > 0) {
-        const seasonCheck = areSpeciesInSeason(
-          location,
-          filters.species,
-          filters.date
-        );
-        
         if (filters.catchRelease === 'Release') {
           // User wants catch & release - include all (it's always allowed)
-          // Optionally prioritize waters where it's required
           return true;
         } else if (filters.catchRelease === 'Keep') {
+          // Only consider species the user selected that are actually present
+          // at this location - species not present here shouldn't block it
+          const locationSpecies = location.species || [];
+          const relevantSpecies = filters.species.filter(selectedSpecies =>
+            locationSpecies.some(locSpecies =>
+              locSpecies.toLowerCase() === selectedSpecies.toLowerCase()
+            )
+          );
+          if (relevantSpecies.length === 0) {
+            return true;
+          }
+          const seasonCheck = areSpeciesInSeason(
+            location,
+            relevantSpecies,
+            filters.date
+          );
           // User wants to keep fish - exclude if catch & release is required during this period
           return !seasonCheck.anyCatchReleaseRequired;
         }
