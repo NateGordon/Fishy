@@ -6,7 +6,7 @@ function ResultsPage() {
   const location = useLocation();
   
   // Get data from navigation state
-  const { locations, filters } = location.state || {};
+  const { locations, filters, selectedLocation } = location.state || {};
 
   const handleBack = () => {
     // Navigate back to filters page (preserving state via localStorage)
@@ -45,7 +45,7 @@ function ResultsPage() {
         <button className="back-button" onClick={handleBack}>
           ← Back to Filters
         </button>
-        <Results locations={locations} filters={filters} />
+        <Results locations={locations} filters={filters} selectedLocation={selectedLocation} />
       </div>
     </div>
   );

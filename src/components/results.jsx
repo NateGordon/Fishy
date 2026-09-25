@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const Results = ({ locations, filters }) => {
+const Results = ({ locations, filters, selectedLocation }) => {
   const [expandedCards, setExpandedCards] = useState(new Set());
 
   const toggleCard = (index) => {
@@ -205,8 +205,8 @@ const Results = ({ locations, filters }) => {
                     )}
                     
                     <div className="result-info-row google-maps-link-row">
-                      <a 
-                        href={`https://www.google.com/maps/dir/?api=1&destination=${location.latitude},${location.longitude}`}
+                      <a
+                        href={`https://www.google.com/maps/dir/?api=1${selectedLocation ? `&origin=${selectedLocation.lat},${selectedLocation.lng}` : ''}&destination=${location.latitude},${location.longitude}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="google-maps-link"
