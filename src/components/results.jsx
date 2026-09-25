@@ -206,7 +206,7 @@ const Results = ({ locations, filters, selectedLocation }) => {
                     
                     <div className="result-info-row google-maps-link-row">
                       <a
-                        href={`https://www.google.com/maps/dir/?api=1${selectedLocation ? `&origin=${selectedLocation.lat},${selectedLocation.lng}` : ''}&destination=${location.latitude},${location.longitude}`}
+                        href={`https://www.google.com/maps/dir/?api=1${selectedLocation ? `&origin=${selectedLocation.label ? encodeURIComponent(selectedLocation.label) : `${selectedLocation.lat},${selectedLocation.lng}`}` : ''}&destination=${location.latitude},${location.longitude}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="google-maps-link"

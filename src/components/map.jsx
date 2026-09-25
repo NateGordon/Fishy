@@ -335,7 +335,11 @@ export default function Map({ selectedRadius, onLocationChange, initialMarker })
       return;
     }
 
-    const location = { lat: suggestion.lat, lng: suggestion.lon };
+    // Keep the geocoded address text alongside the coordinates so directions
+    // can start from the address itself rather than our approximate lat/lng -
+    // Nominatim and Google Maps don't always agree on which building a given
+    // coordinate belongs to (e.g. resolving to a neighboring house number).
+    const location = { lat: suggestion.lat, lng: suggestion.lon, label: suggestion.label };
     setMarker(location);
     if (onLocationChange) {
       onLocationChange(location);
@@ -397,7 +401,7 @@ export default function Map({ selectedRadius, onLocationChange, initialMarker })
         return;
       }
 
-      const location = { lat: latitude, lng: longitude };
+      const location = { lat: latitude, lng: longitude, label: results[0].display_name };
       setMarker(location);
       if (onLocationChange) {
         onLocationChange(location);
