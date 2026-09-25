@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Circle, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { nhBoundaryPolygon } from "../data/nhBoundary";
 
 // Fix for default marker icon in React-Leaflet
 // This is needed because webpack/vite doesn't handle the default icon paths correctly
@@ -16,20 +17,12 @@ const DefaultIcon = new L.Icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
-// New Hampshire bounds
+// Rectangular pan/zoom limit for the map viewport (generous padding around
+// NH so users can see a bit of neighboring context) - NOT used for
+// validating where a pin can be placed; see nhBoundaryPolygon for that.
 const nhBounds = [
   [42.7, -72.55], // Southwest corner [lat, lng]
   [45.3, -70.7]   // Northeast corner [lat, lng]
-];
-
-// Approximate New Hampshire state boundary coordinates (simplified rectangular boundary)
-// Using a more accurate rectangular approximation of NH
-const nhBoundary = [
-  [45.305, -72.557], // Northwest
-  [45.305, -70.694], // Northeast  
-  [42.697, -70.694], // Southeast
-  [42.697, -72.557], // Southwest
-  [45.305, -72.557]  // Back to start
 ];
 
 // Large bounding box covering surrounding area (for gray overlay)
@@ -37,6 +30,22 @@ const overlayBounds = [
   [30, -80],  // Southwest corner (covers large area)
   [50, -65]   // Northeast corner
 ];
+
+// Ray-casting point-in-polygon test. `polygon` is an array of [lat, lng]
+// pairs; standard even-odd algorithm, accurate for simple (non-self-
+// intersecting) polygons like a state boundary.
+function isPointInPolygon(lat, lng, polygon) {
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const [lati, lngi] = polygon[i];
+    const [latj, lngj] = polygon[j];
+    const intersects =
+      lati > lat !== latj > lat &&
+      lng < ((lngj - lngi) * (lat - lati)) / (latj - lati) + lngi;
+    if (intersects) inside = !inside;
+  }
+  return inside;
+}
 
 // Bias geocoding toward NH without double-qualifying an address that
 // already names the state (e.g. a full suggestion label selected from the
@@ -69,7 +78,10 @@ function MapClickHandler({ onMapClick, isWithinBounds }) {
 }
 
 // Component to create gray overlay mask (everything except NH)
-// Creates polygons around NH to gray out surrounding states
+// Uses a single polygon with the real NH boundary as an interior hole, so
+// the mask follows NH's actual irregular shape instead of a rectangle -
+// otherwise parts of Maine, Vermont, Massachusetts, and Quebec that fall
+// within NH's bounding rectangle would appear unmasked and selectable.
 function GrayOverlay() {
   const map = useMap();
   const overlayRef = useRef(null);
@@ -78,47 +90,29 @@ function GrayOverlay() {
     if (!overlayRef.current && map) {
       try {
         const layers = [];
-        const grayStyle = {
+
+        // Outer ring = large rectangle around NH, inner ring = actual NH
+        // boundary; Leaflet renders the area between the two rings (i.e.
+        // everything outside NH but within the rectangle) as filled.
+        const [[southLat, westLng], [northLat, eastLng]] = overlayBounds;
+        const outerRing = [
+          [southLat, westLng],
+          [southLat, eastLng],
+          [northLat, eastLng],
+          [northLat, westLng],
+        ];
+        const mask = L.polygon([outerRing, nhBoundaryPolygon], {
           fillColor: '#808080',
           fillOpacity: 0.6,
+          fillRule: 'evenodd',
           color: 'transparent',
           weight: 0,
           interactive: false
-        };
+        }).addTo(map);
+        layers.push(mask);
 
-        // Create 4 rectangles around NH to gray out surrounding areas
-        // Rectangle format: [[south, west], [north, east]]
-        
-        // Top rectangle (above NH)
-        const topRect = L.rectangle([
-          [nhBoundary[0][0], overlayBounds[0][1]], // SW: top of NH, west edge
-          [overlayBounds[1][0], overlayBounds[1][1]] // NE: far north, far east
-        ], grayStyle).addTo(map);
-        layers.push(topRect);
-
-        // Bottom rectangle (below NH)
-        const bottomRect = L.rectangle([
-          [overlayBounds[0][0], overlayBounds[0][1]], // SW: far south, far west
-          [nhBoundary[2][0], overlayBounds[1][1]] // NE: bottom of NH, far east
-        ], grayStyle).addTo(map);
-        layers.push(bottomRect);
-
-        // Left rectangle (west of NH)
-        const leftRect = L.rectangle([
-          [nhBoundary[3][0], overlayBounds[0][1]], // SW: bottom of NH, far west
-          [nhBoundary[0][0], nhBoundary[3][1]] // NE: top of NH, west edge of NH
-        ], grayStyle).addTo(map);
-        layers.push(leftRect);
-
-        // Right rectangle (east of NH)
-        const rightRect = L.rectangle([
-          [nhBoundary[2][0], nhBoundary[1][1]], // SW: bottom of NH, east edge of NH
-          [nhBoundary[1][0], overlayBounds[1][1]] // NE: top of NH, far east
-        ], grayStyle).addTo(map);
-        layers.push(rightRect);
-
-        // Add NH state boundary outline for visual clarity
-        const nhOutline = L.polygon(nhBoundary, {
+        // NH state boundary outline for visual clarity
+        const nhOutline = L.polygon(nhBoundaryPolygon, {
           fillColor: 'transparent',
           fillOpacity: 0,
           color: '#333333',
@@ -199,12 +193,7 @@ export default function Map({ selectedRadius, onLocationChange, initialMarker })
 
   // Check if position is within NH bounds
   const isWithinBounds = useCallback((lat, lng) => {
-    return (
-      lat >= nhBounds[0][0] &&
-      lat <= nhBounds[1][0] &&
-      lng >= nhBounds[0][1] &&
-      lng <= nhBounds[1][1]
-    );
+    return isPointInPolygon(lat, lng, nhBoundaryPolygon);
   }, []);
 
   // Handle map click to place marker
