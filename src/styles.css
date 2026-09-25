@@ -243,6 +243,63 @@ h1:hover {
     position: relative;
   }
 
+  /* Address Search */
+  .address-search-form {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1000;
+    display: flex;
+    gap: 6px;
+  }
+
+  .address-search-input {
+    border: 2px solid #007bff;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 14px;
+    width: 140px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  @media (min-width: 480px) {
+    .address-search-input {
+      width: 220px;
+    }
+  }
+
+  .address-search-input:focus {
+    outline: none;
+    border-color: #0056b3;
+  }
+
+  .address-search-button {
+    background: white;
+    border: 2px solid #007bff;
+    color: #007bff;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .address-search-button:hover:not(:disabled) {
+    background: #007bff;
+    color: white;
+  }
+
+  .address-search-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #e9ecef;
+    border-color: #ced4da;
+    color: #6c757d;
+  }
+
   /* Use My Location Button */
   .use-location-button {
     position: absolute;

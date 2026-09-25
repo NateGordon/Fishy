@@ -149,6 +149,8 @@ export default function Map({ selectedRadius, onLocationChange, initialMarker })
   const [marker, setMarker] = useState(initialMarker || null);
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState(null);
+  const [addressQuery, setAddressQuery] = useState("");
+  const [isGeocoding, setIsGeocoding] = useState(false);
   const mapInstanceRef = useRef(null);
 
   // Update marker when initialMarker prop changes
@@ -233,6 +235,52 @@ export default function Map({ selectedRadius, onLocationChange, initialMarker })
     );
   }, [isWithinBounds, onLocationChange]);
 
+  // Handle address search using OpenStreetMap's Nominatim geocoder
+  const handleAddressSearch = useCallback(async (e) => {
+    e.preventDefault();
+    const query = addressQuery.trim();
+    if (!query || isGeocoding) return;
+
+    setIsGeocoding(true);
+    setLocationError(null);
+
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q=${encodeURIComponent(`${query}, New Hampshire`)}`;
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Geocoding request failed: ${response.status}`);
+      }
+      const results = await response.json();
+
+      if (!results || results.length === 0) {
+        setLocationError("Couldn't find that address. Try being more specific, or click directly on the map.");
+        return;
+      }
+
+      const latitude = parseFloat(results[0].lat);
+      const longitude = parseFloat(results[0].lon);
+
+      if (!isWithinBounds(latitude, longitude)) {
+        setLocationError("That address is outside New Hampshire. Please enter an NH address or click on the map.");
+        return;
+      }
+
+      const location = { lat: latitude, lng: longitude };
+      setMarker(location);
+      if (onLocationChange) {
+        onLocationChange(location);
+      }
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.setView([latitude, longitude], 12);
+      }
+    } catch (error) {
+      console.error('Error geocoding address:', error);
+      setLocationError("Something went wrong searching for that address. Please try again or click on the map.");
+    } finally {
+      setIsGeocoding(false);
+    }
+  }, [addressQuery, isGeocoding, isWithinBounds, onLocationChange]);
+
   // Calculate radius in meters
   const radiusMeters = radiusToMeters(selectedRadius);
 
@@ -253,6 +301,24 @@ export default function Map({ selectedRadius, onLocationChange, initialMarker })
 
   return (
     <div style={{ width: '100%', height: '500px', position: 'relative' }}>
+      {/* Address Search */}
+      <form className="address-search-form" onSubmit={handleAddressSearch}>
+        <input
+          type="text"
+          className="address-search-input"
+          placeholder="Enter an address in NH…"
+          value={addressQuery}
+          onChange={(e) => setAddressQuery(e.target.value)}
+        />
+        <button
+          type="submit"
+          className="address-search-button"
+          disabled={isGeocoding || !addressQuery.trim()}
+        >
+          {isGeocoding ? 'Searching…' : '🔍 Search'}
+        </button>
+      </form>
+
       {/* Use My Location Button */}
       <button
         onClick={handleUseMyLocation}
