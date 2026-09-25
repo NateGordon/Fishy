@@ -38,6 +38,14 @@ const overlayBounds = [
   [50, -65]   // Northeast corner
 ];
 
+// Bias geocoding toward NH without double-qualifying an address that
+// already names the state (e.g. a full suggestion label selected from the
+// dropdown) - Nominatim returns zero results for a redundant/garbled
+// "..., New Hampshire, United States, New Hampshire" query.
+const buildGeocodeQuery = (query) => {
+  return /new hampshire/i.test(query) ? query : `${query}, New Hampshire`;
+};
+
 // Convert radius string to meters
 const radiusToMeters = (radiusStr) => {
   if (!radiusStr || radiusStr === "All of NH") return null;
@@ -273,7 +281,7 @@ export default function Map({ selectedRadius, onLocationChange, initialMarker })
     abortControllerRef.current = controller;
 
     try {
-      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=us&q=${encodeURIComponent(`${query}, New Hampshire`)}`;
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=us&q=${encodeURIComponent(buildGeocodeQuery(query))}`;
       const response = await fetch(url, { signal: controller.signal });
       if (!response.ok) {
         throw new Error(`Geocoding request failed: ${response.status}`);
@@ -369,7 +377,7 @@ export default function Map({ selectedRadius, onLocationChange, initialMarker })
     setLocationError(null);
 
     try {
-      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q=${encodeURIComponent(`${query}, New Hampshire`)}`;
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q=${encodeURIComponent(buildGeocodeQuery(query))}`;
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`Geocoding request failed: ${response.status}`);
