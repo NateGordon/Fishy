@@ -351,10 +351,10 @@ def process_features(features):
         # Based on discovered fields: WB_NAME, WB_CLASS, TOWN, DEPTHAVG, DEPTHMAX, FISHACRE, etc.
         
         # Combine all NOTES fields for regulations
-        notes1 = attributes.get('NOTES1', '').strip()
-        notes2 = attributes.get('NOTES2', '').strip()
-        notes3 = attributes.get('NOTES3', '').strip()
-        notes4 = attributes.get('NOTES4', '').strip()
+        notes1 = (attributes.get('NOTES1') or '').strip()
+        notes2 = (attributes.get('NOTES2') or '').strip()
+        notes3 = (attributes.get('NOTES3') or '').strip()
+        notes4 = (attributes.get('NOTES4') or '').strip()
         
         # Combine all notes into regulations text
         notes_list = [n for n in [notes1, notes2, notes3, notes4] if n and n != ' ']
@@ -383,8 +383,8 @@ def process_features(features):
         # Map fields from NH_Freshwater_Fishing_Guide service
         # Use FGEN for water_type (has readable values like "Lake/Pond", "River/Strea")
         # Fallback to WB_CLASS if FGEN not available
-        fgen = attributes.get('FGEN', '').strip()
-        wb_class = attributes.get('WB_CLASS', '').strip()
+        fgen = (attributes.get('FGEN') or '').strip()
+        wb_class = (attributes.get('WB_CLASS') or '').strip()
         
         # Normalize FGEN to match filter options (Lake, River, Pond)
         # Classification priority:
@@ -425,6 +425,15 @@ def process_features(features):
         # If still no classification, try WB_CLASS (but it's usually just codes like "B", "A")
         if not water_type and wb_class and wb_class != ' ':
             water_type = wb_class
+
+        # Final fallback: NH F&G's ArcGIS service no longer exposes FGEN/WB_CLASS type
+        # fields (removed from the live schema as of the Sept 2026 refresh), so waterbodies
+        # without "Lake"/"Pond" in their name would otherwise go unclassified entirely and
+        # silently disappear from every Body of Water filter. Use the same acres-based
+        # heuristic previously reserved for FGEN=="Lake/Pond" ambiguous cases (see
+        # LAKE_VS_POND_CLASSIFICATION.md) as the general fallback instead.
+        if not water_type and acres:
+            water_type = 'Lake' if acres > 50 else 'Pond'
         
         waterbody = {
             'id': attributes.get('OBJECTID') or attributes.get('WB_ID') or attributes.get('FID') or idx + 1,
