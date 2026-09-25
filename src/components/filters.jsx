@@ -28,12 +28,8 @@ const Filters = ({ filters, setFilters, onSubmit }) => {
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isWaterTypeDropdownOpen, setIsWaterTypeDropdownOpen] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(false);
-  const [showWaterTypeTooltip, setShowWaterTypeTooltip] = useState(false);
   const dropdownRef = useRef(null);
   const waterTypeDropdownRef = useRef(null);
-  const tooltipRef = useRef(null);
-  const waterTypeTooltipRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -187,17 +183,7 @@ const Filters = ({ filters, setFilters, onSubmit }) => {
 
       <div className="filter-group">
         <label className="filter-label">Species</label>
-        <div 
-          className="dropdown-wrapper"
-          onMouseEnter={() => filters.species.length > 0 && setShowTooltip(true)}
-          onMouseLeave={(e) => {
-            // Check if mouse is moving to tooltip
-            const relatedTarget = e.relatedTarget;
-            if (!relatedTarget || !tooltipRef.current || !tooltipRef.current.contains(relatedTarget)) {
-              setShowTooltip(false);
-            }
-          }}
-        >
+        <div className="dropdown-wrapper">
           <button
             type="button"
             className={`form-select ${!canSelectSpecies ? 'disabled' : ''}`}
@@ -207,20 +193,6 @@ const Filters = ({ filters, setFilters, onSubmit }) => {
           >
             {!canSelectSpecies ? "Select date and catch & release first" : getSpeciesDisplayText()}
           </button>
-          {showTooltip && filters.species.length > 0 && (
-            <div 
-              className="species-tooltip"
-              ref={tooltipRef}
-              onMouseEnter={() => setShowTooltip(true)}
-              onMouseLeave={() => setShowTooltip(false)}
-            >
-              <div className="species-tooltip-content">
-                {filters.species.map((species, index) => (
-                  <div key={index}>{species}</div>
-                ))}
-              </div>
-            </div>
-          )}
           {isDropdownOpen && canSelectSpecies && (
             <div className="dropdown-menu show" ref={dropdownRef}>
               {/* Select All Checkbox */}
@@ -271,11 +243,7 @@ const Filters = ({ filters, setFilters, onSubmit }) => {
 
       <div className="filter-group">
         <label className="filter-label">Body of Water</label>
-        <div 
-          className="dropdown-wrapper"
-          onMouseEnter={() => filters.waterType.length > 0 && setShowWaterTypeTooltip(true)}
-          onMouseLeave={() => setShowWaterTypeTooltip(false)}
-        >
+        <div className="dropdown-wrapper">
           <button
             type="button"
             className="form-select"
@@ -284,20 +252,6 @@ const Filters = ({ filters, setFilters, onSubmit }) => {
           >
             {getWaterTypeDisplayText()}
           </button>
-          {showWaterTypeTooltip && filters.waterType.length > 0 && (
-            <div 
-              className="species-tooltip"
-              ref={waterTypeTooltipRef}
-              onMouseEnter={() => setShowWaterTypeTooltip(true)}
-              onMouseLeave={() => setShowWaterTypeTooltip(false)}
-            >
-              <div className="species-tooltip-content">
-                {filters.waterType.map((waterType, index) => (
-                  <div key={index}>{waterType}</div>
-                ))}
-              </div>
-            </div>
-          )}
           {isWaterTypeDropdownOpen && (
             <div className="dropdown-menu show" ref={waterTypeDropdownRef}>
               {/* Select All Checkbox */}

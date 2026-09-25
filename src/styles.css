@@ -130,60 +130,6 @@ h1:hover {
     position: relative;
   }
 
-  .species-tooltip {
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 0;
-    right: 0;
-    z-index: 1001;
-    pointer-events: auto;
-  }
-  
-  /* Create an invisible bridge area to prevent tooltip from disappearing when moving mouse */
-  .species-tooltip::before {
-    content: '';
-    position: absolute;
-    bottom: -8px;
-    left: 0;
-    right: 0;
-    height: 8px;
-    background: transparent;
-    pointer-events: auto;
-  }
-  
-  /* Create an invisible bridge to prevent tooltip from disappearing */
-  .species-tooltip::before {
-    content: '';
-    position: absolute;
-    bottom: -5px;
-    left: 0;
-    right: 0;
-    height: 5px;
-    background: transparent;
-  }
-
-  .species-tooltip-content {
-    background: #333;
-    color: white;
-    padding: 12px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    font-size: 14px;
-    line-height: 1.6;
-    max-height: 300px;
-    overflow-y: auto;
-  }
-
-  .species-tooltip-content div {
-    padding: 2px 0;
-  }
-
-  .species-tooltip-content div:not(:last-child) {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 4px;
-    margin-bottom: 4px;
-  }
-
   .dropdown-menu {
     position: absolute;
     top: calc(100% + 16px);
