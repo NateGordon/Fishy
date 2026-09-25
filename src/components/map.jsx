@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Circle, useMapEvents, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Circle, ZoomControl, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { nhBoundaryPolygon } from "../data/nhBoundary";
@@ -25,10 +25,11 @@ const nhBounds = [
   [45.3, -70.7]   // Northeast corner [lat, lng]
 ];
 
-// Large bounding box covering surrounding area (for gray overlay)
+// Large bounding box covering surrounding area (for gray overlay) - wide
+// enough that its own edge stays off-screen even at the map's minZoom
 const overlayBounds = [
-  [30, -80],  // Southwest corner (covers large area)
-  [50, -65]   // Northeast corner
+  [15, -100], // Southwest corner (covers large area)
+  [65, -45]   // Northeast corner
 ];
 
 // Ray-casting point-in-polygon test. `polygon` is an array of [lat, lng]
@@ -492,7 +493,7 @@ export default function Map({ selectedRadius, onLocationChange, initialMarker })
         center={initialCenter}
         zoom={initialZoom}
         style={{ width: '100%', height: '500px' }}
-        minZoom={5}
+        minZoom={6}
         maxZoom={13}
         maxBounds={[
           [nhBounds[0][0], nhBounds[0][1]],
@@ -500,14 +501,16 @@ export default function Map({ selectedRadius, onLocationChange, initialMarker })
         ]}
         scrollWheelZoom={true}
         doubleClickZoom={true}
-        zoomControl={true}
+        zoomControl={false}
         ref={handleMapRef}
       >
+        <ZoomControl position="bottomleft" />
+
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        
+
         {/* Gray overlay mask (everything except NH) */}
         <GrayOverlay />
         
