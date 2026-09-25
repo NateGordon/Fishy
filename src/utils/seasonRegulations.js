@@ -24,8 +24,9 @@ function getFourthSaturdayApril(year) {
 function getLaborDay(year) {
   const september1 = new Date(year, 8, 1); // September is month 8
   const dayOfWeek = september1.getDay(); // 0 = Sunday, 6 = Saturday
-  // Find first Monday
-  const daysToFirstMonday = (1 - dayOfWeek + 7) % 7 || 7;
+  // Find first Monday (0 when Sept 1 itself is a Monday - don't fall back to 7,
+  // that would skip Labor Day itself and land on the following Monday instead)
+  const daysToFirstMonday = (1 - dayOfWeek + 7) % 7;
   const laborDay = new Date(year, 8, 1 + daysToFirstMonday);
   return laborDay;
 }
