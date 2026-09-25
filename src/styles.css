@@ -199,24 +199,63 @@ h1:hover {
     gap: 6px;
   }
 
+  .address-search-input-wrapper {
+    position: relative;
+    width: 140px;
+  }
+
+  @media (min-width: 480px) {
+    .address-search-input-wrapper {
+      width: 220px;
+    }
+  }
+
   .address-search-input {
     border: 2px solid #007bff;
     border-radius: 8px;
     padding: 10px 12px;
     font-size: 14px;
-    width: 140px;
+    width: 100%;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  }
-
-  @media (min-width: 480px) {
-    .address-search-input {
-      width: 220px;
-    }
   }
 
   .address-search-input:focus {
     outline: none;
     border-color: #0056b3;
+  }
+
+  .address-suggestions {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    max-height: 240px;
+    overflow-y: auto;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .address-suggestion-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1.4;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .address-suggestion-item:last-child {
+    border-bottom: none;
+  }
+
+  .address-suggestion-item:hover,
+  .address-suggestion-item.highlighted {
+    background-color: #f0f7ff;
   }
 
   .address-search-button {

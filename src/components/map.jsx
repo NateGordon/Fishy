@@ -151,7 +151,13 @@ export default function Map({ selectedRadius, onLocationChange, initialMarker })
   const [locationError, setLocationError] = useState(null);
   const [addressQuery, setAddressQuery] = useState("");
   const [isGeocoding, setIsGeocoding] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const mapInstanceRef = useRef(null);
+  const addressFormRef = useRef(null);
+  const debounceTimerRef = useRef(null);
+  const abortControllerRef = useRef(null);
 
   // Update marker when initialMarker prop changes
   useEffect(() => {
@@ -159,6 +165,29 @@ export default function Map({ selectedRadius, onLocationChange, initialMarker })
       setMarker(initialMarker);
     }
   }, [initialMarker]);
+
+  // Close the address suggestions dropdown when clicking outside it
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (addressFormRef.current && !addressFormRef.current.contains(e.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Clean up any in-flight debounce/request on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   // Check if position is within NH bounds
   const isWithinBounds = useCallback((lat, lng) => {
@@ -235,12 +264,107 @@ export default function Map({ selectedRadius, onLocationChange, initialMarker })
     );
   }, [isWithinBounds, onLocationChange]);
 
-  // Handle address search using OpenStreetMap's Nominatim geocoder
+  // Fetch address suggestions (debounced) from OpenStreetMap's Nominatim geocoder
+  const fetchSuggestions = useCallback(async (query) => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=us&q=${encodeURIComponent(`${query}, New Hampshire`)}`;
+      const response = await fetch(url, { signal: controller.signal });
+      if (!response.ok) {
+        throw new Error(`Geocoding request failed: ${response.status}`);
+      }
+      const results = await response.json();
+      setSuggestions(
+        results.map((r) => ({
+          label: r.display_name,
+          lat: parseFloat(r.lat),
+          lon: parseFloat(r.lon),
+        }))
+      );
+      setShowSuggestions(true);
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('Error fetching address suggestions:', error);
+      }
+    }
+  }, []);
+
+  // Debounce suggestion fetches as the user types
+  const handleAddressInputChange = useCallback((e) => {
+    const value = e.target.value;
+    setAddressQuery(value);
+    setHighlightedIndex(-1);
+
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    const trimmed = value.trim();
+    if (trimmed.length < 3) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      return;
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      fetchSuggestions(trimmed);
+    }, 400);
+  }, [fetchSuggestions]);
+
+  // Place the pin at a chosen suggestion
+  const selectSuggestion = useCallback((suggestion) => {
+    if (!isWithinBounds(suggestion.lat, suggestion.lon)) {
+      setLocationError("That address is outside New Hampshire. Please enter an NH address or click on the map.");
+      setShowSuggestions(false);
+      return;
+    }
+
+    const location = { lat: suggestion.lat, lng: suggestion.lon };
+    setMarker(location);
+    if (onLocationChange) {
+      onLocationChange(location);
+    }
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.setView([suggestion.lat, suggestion.lon], 12);
+    }
+    setAddressQuery(suggestion.label);
+    setSuggestions([]);
+    setShowSuggestions(false);
+    setLocationError(null);
+  }, [isWithinBounds, onLocationChange]);
+
+  const handleAddressKeyDown = useCallback((e) => {
+    if (!showSuggestions || suggestions.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev + 1) % suggestions.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev - 1 + suggestions.length) % suggestions.length);
+    } else if (e.key === 'Enter' && highlightedIndex >= 0) {
+      e.preventDefault();
+      selectSuggestion(suggestions[highlightedIndex]);
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false);
+    }
+  }, [showSuggestions, suggestions, highlightedIndex, selectSuggestion]);
+
+  // Handle direct search submission (Enter without picking a suggestion, or clicking Search)
   const handleAddressSearch = useCallback(async (e) => {
     e.preventDefault();
     const query = addressQuery.trim();
     if (!query || isGeocoding) return;
 
+    setShowSuggestions(false);
     setIsGeocoding(true);
     setLocationError(null);
 
@@ -302,14 +426,33 @@ export default function Map({ selectedRadius, onLocationChange, initialMarker })
   return (
     <div style={{ width: '100%', height: '500px', position: 'relative' }}>
       {/* Address Search */}
-      <form className="address-search-form" onSubmit={handleAddressSearch}>
-        <input
-          type="text"
-          className="address-search-input"
-          placeholder="Enter an address in NH…"
-          value={addressQuery}
-          onChange={(e) => setAddressQuery(e.target.value)}
-        />
+      <form className="address-search-form" onSubmit={handleAddressSearch} ref={addressFormRef}>
+        <div className="address-search-input-wrapper">
+          <input
+            type="text"
+            className="address-search-input"
+            placeholder="Enter an address in NH…"
+            value={addressQuery}
+            onChange={handleAddressInputChange}
+            onKeyDown={handleAddressKeyDown}
+            onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+            autoComplete="off"
+          />
+          {showSuggestions && suggestions.length > 0 && (
+            <ul className="address-suggestions">
+              {suggestions.map((suggestion, index) => (
+                <li
+                  key={`${suggestion.lat}-${suggestion.lon}-${index}`}
+                  className={`address-suggestion-item ${index === highlightedIndex ? 'highlighted' : ''}`}
+                  onClick={() => selectSuggestion(suggestion)}
+                  onMouseEnter={() => setHighlightedIndex(index)}
+                >
+                  {suggestion.label}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         <button
           type="submit"
           className="address-search-button"
