@@ -4,6 +4,26 @@
  */
 
 /**
+ * Parse a "YYYY-MM-DD" string as local midnight. `new Date("YYYY-MM-DD")`
+ * parses as UTC midnight, which in US timezones is the previous evening -
+ * e.g. Jan 1 would resolve to Dec 31 and pick up the wrong year's seasons.
+ */
+function parseLocalDate(dateStr) {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+/**
+ * Format a Date as "YYYY-MM-DD" using its local calendar day (toISOString
+ * would use the UTC day, which can differ)
+ */
+function formatLocalDate(date) {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+/**
  * Calculate the 4th Saturday in April for a given year
  */
 function getFourthSaturdayApril(year) {
@@ -70,16 +90,9 @@ function classifyWaterbody(waterbody) {
  * Check if a date falls within a season range
  */
 function isDateInSeason(date, startDate, endDate) {
-  const checkDate = new Date(date);
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  
-  // Set time to midnight for accurate comparison
-  checkDate.setHours(0, 0, 0, 0);
-  start.setHours(0, 0, 0, 0);
-  end.setHours(23, 59, 59, 999);
-  
-  return checkDate >= start && checkDate <= end;
+  // All three are local midnights, so the range is inclusive on both ends
+  const checkDate = parseLocalDate(date);
+  return checkDate >= parseLocalDate(startDate) && checkDate <= parseLocalDate(endDate);
 }
 
 /**
@@ -101,13 +114,13 @@ function getSpeciesSeason(waterbody, species, year) {
       case 'wild_trout_stream':
         return {
           start: `${yearStr}-01-01`,
-          end: getLaborDay(year).toISOString().split('T')[0],
+          end: formatLocalDate(getLaborDay(year)),
           notes: 'Wild Trout Streams season'
         };
       case 'trout_pond': {
         const fourthSatApril = getFourthSaturdayApril(year);
         return {
-          start: fourthSatApril.toISOString().split('T')[0],
+          start: formatLocalDate(fourthSatApril),
           end: `${yearStr}-10-15`,
           notes: 'Trout Ponds season'
         };
@@ -115,8 +128,8 @@ function getSpeciesSeason(waterbody, species, year) {
       case 'wild_trout_pond': {
         const fourthSatApril2 = getFourthSaturdayApril(year);
         return {
-          start: fourthSatApril2.toISOString().split('T')[0],
-          end: getLaborDay(year).toISOString().split('T')[0],
+          start: formatLocalDate(fourthSatApril2),
+          end: formatLocalDate(getLaborDay(year)),
           notes: 'Wild Trout Ponds season'
         };
       }
@@ -163,7 +176,7 @@ function getSpeciesSeason(waterbody, species, year) {
     if (isPleasantLake) {
       const fourthSatApril = getFourthSaturdayApril(year);
       return {
-        start: fourthSatApril.toISOString().split('T')[0],
+        start: formatLocalDate(fourthSatApril),
         end: `${yearStr}-09-30`,
         notes: 'Pleasant Lake, New London special season'
       };
@@ -195,7 +208,7 @@ function getSpeciesSeason(waterbody, species, year) {
       case 'trout_pond': {
         const fourthSatApril = getFourthSaturdayApril(year);
         return {
-          start: fourthSatApril.toISOString().split('T')[0],
+          start: formatLocalDate(fourthSatApril),
           end: `${yearStr}-10-15`,
           notes: 'Trout Ponds season',
           catchRelease: catchReleasePeriod
@@ -235,7 +248,7 @@ function getSpeciesSeason(waterbody, species, year) {
     case 'trout_pond': {
       const fourthSatApril = getFourthSaturdayApril(year);
       return {
-        start: fourthSatApril.toISOString().split('T')[0],
+        start: formatLocalDate(fourthSatApril),
         end: `${yearStr}-10-15`,
         notes: 'Trout Ponds season'
       };
@@ -263,16 +276,13 @@ function getSpeciesSeason(waterbody, species, year) {
  * Check if a species is in season on a specific date for a waterbody
  */
 export function isSpeciesInSeason(waterbody, species, date) {
-  const checkDate = new Date(date);
-  const year = checkDate.getFullYear();
-  
+  const year = parseLocalDate(date).getFullYear();
+
   const season = getSpeciesSeason(waterbody, species, year);
-  
+
   // Check ice fishing only period
   if (season.iceFishingOnly) {
-    const iceStart = new Date(season.iceFishingOnly.start);
-    const iceEnd = new Date(season.iceFishingOnly.end);
-    if (checkDate >= iceStart && checkDate <= iceEnd) {
+    if (isDateInSeason(date, season.iceFishingOnly.start, season.iceFishingOnly.end)) {
       // During ice fishing only period - would need to check if it's actually ice fishing season
       // For now, we'll allow it but note it's ice fishing only
       return { inSeason: true, method: 'ice_fishing_only' };
@@ -285,11 +295,7 @@ export function isSpeciesInSeason(waterbody, species, date) {
   // Check catch & release period for bass
   let catchReleaseRequired = false;
   if (season.catchRelease && inSeason) {
-    const crStart = new Date(season.catchRelease.start);
-    const crEnd = new Date(season.catchRelease.end);
-    if (checkDate >= crStart && checkDate <= crEnd) {
-      catchReleaseRequired = true;
-    }
+    catchReleaseRequired = isDateInSeason(date, season.catchRelease.start, season.catchRelease.end);
   }
   
   return {

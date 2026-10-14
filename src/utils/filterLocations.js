@@ -314,11 +314,14 @@ export function sortLocations(locations, filters, selectedLocation) {
     return [];
   }
   
-  // Score each location
-  const scoredLocations = locations.map(location => ({
-    ...location,
-    score: scoreLocation(location, filters, selectedLocation)
-  }));
+  // Score each location. Copy first, then score the copy - scoreLocation
+  // attaches _distance/_score/_relevantSpeciesCount for display, and those
+  // must land on the object we return, not on the shared source data.
+  const scoredLocations = locations.map(location => {
+    const scored = { ...location };
+    scored.score = scoreLocation(scored, filters, selectedLocation);
+    return scored;
+  });
   
   // Sort by score (highest first)
   return scoredLocations.sort((a, b) => {
